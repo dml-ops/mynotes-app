@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Notes App</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; background:#0f172a; color:#e2e8f0; margin:0; padding:40px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h1 { text-align:center; }
+  form { display:flex; gap:8px; margin-bottom:24px; }
+  input, textarea { flex:1; padding:10px; border-radius:8px; border:1px solid #334155; background:#1e293b; color:#e2e8f0; }
+  button { padding:10px 16px; border:none; border-radius:8px; background:#2563eb; color:white; cursor:pointer; }
+  .note { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .note h3 { margin:0 0 6px 0; }
+  .note small { color:#94a3b8; }
+  .del { float:right; background:#dc2626; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📝 My Notes</h1>
+  <form id="noteForm">
+    <input id="title" placeholder="Title" required />
+    <input id="content" placeholder="Content" />
+    <button type="submit">Add</button>
+  </form>
+  <div id="notes"></div>
+</div>
+<script>
+async function loadNotes() {
+  const res = await fetch('/api/notes');
+  const notes = await res.json();
+  const el = document.getElementById('notes');
+  el.innerHTML = notes.map(n => `
+    <div class="note">
+      <button class="del" onclick="deleteNote(${n.id})">Delete</button>
+      <h3>${n.title}</h3>
+      <p>${n.content || ''}</p>
+      <small>${new Date(n.created_at).toLocaleString()}</small>
+    </div>
+  `).join('');
+}
+
+async function deleteNote(id) {
+  await fetch('/api/notes/' + id, { method: 'DELETE' });
+  loadNotes();
+}
+
+document.getElementById('noteForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('title').value;
+  const content = document.getElementById('content').value;
+  await fetch('/api/notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, content })
+  });
+  document.getElementById('title').value = '';
+  document.getElementById('content').value = '';
+  loadNotes();
+});
+
+loadNotes();
+</script>
+</body>
+</html>

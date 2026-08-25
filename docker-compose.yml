@@ -1,0 +1,45 @@
+# Specifies the version of the Docker Compose file format
+version: "3.9"
+
+services:
+  # Defines the application service
+  app:
+    # Builds the Docker image from a Dockerfile in the current directory (.)
+    build: .
+    # Tags the built image with a specific name and tag
+    image: bydml/notes-app:latest
+    # Maps port 3000 on your host machine to port 3000 inside the container
+    ports:
+      - "3000:3000"
+    # Sets environment variables inside the app container to connect to the database
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: appuser
+      DB_PASSWORD: apppassword
+      DB_NAME: notesdb
+    # Ensures the database service starts up *before* the app service
+    depends_on:
+      - db
+    # Automatically restarts the container if it crashes (unless manually stopped)
+    restart: unless-stopped
+
+  # Defines the PostgreSQL database service
+  db:
+    # Uses the official lightweight Alpine-based PostgreSQL 16 image
+    image: postgres:16-alpine
+    # Sets the initialization environment variables for PostgreSQL
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: notesdb
+    # Persists database data on a Docker volume so it isn't lost when the container stops
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Automatically restarts the database container if it crashes
+    restart: unless-stopped
+
+# Declares the named volume used for database persistence
+volumes:
+  db_data:
+
